@@ -1,0 +1,18 @@
+SimplePlayer2
+SimplePlayer
+SimplePlayer1
+Current battle: SimplePlayer2 vs SimplePlayer	| 0
+Current battle: SimplePlayer2 vs SimplePlayer1	| 0
+Current battle: SimplePlayer vs SimplePlayer1	| 0
+SimplePlayer : 2
+SimplePlayer1 : 2
+SimplePlayer2 : 2
+SimplePlayer2
+SimplePlayer
+SimplePlayer1
+Current battle: SimplePlayer2 vs SimplePlayer	| 0
+Current battle: SimplePlayer2 vs SimplePlayer1	| 0
+Current battle: SimplePlayer vs SimplePlayer1	| 0
+SimplePlayer : 2
+SimplePlayer1 : 2
+SimplePlayer2 : 2
