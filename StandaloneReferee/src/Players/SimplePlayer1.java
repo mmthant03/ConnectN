@@ -3,6 +3,8 @@ package Players;
 import Utilities.Move;
 import Utilities.StateTree;
 
+import java.util.ArrayList;
+
 
 /**
  * This is an example of how to make a player.
@@ -48,4 +50,36 @@ public class SimplePlayer1 extends Player
 		}
 		return new Move(false, 100);
 	}
+
+	public ArrayList<Move> getLegalMoves(StateTree st)
+	{
+		ArrayList<Move> legalMoves = new ArrayList<>();
+		// maximum possible legal moves correspond to the number of columns of the board
+		int maxLegalMove = st.columns;
+
+		for (int i = 0; i < st.rows; i++)
+		{
+			for(int j=0; j<st.columns; j++)
+			{
+				if(st.getBoardMatrix()[i][j] == 0)
+				{
+					Move m = new Move(false, j);
+					legalMoves.add(m);
+					maxLegalMove--;
+				}
+				if(maxLegalMove == 0) return legalMoves;
+			}
+		}
+		return legalMoves;
+	}
+
+	public int max_value() {
+		return 0;
+	}
+
+	public int min_value() {
+		return 0;
+	}
+
+
 }
