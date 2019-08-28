@@ -25,7 +25,7 @@ public abstract class StateTree
 	boolean pop1, pop2; // true if the player has used their pop move
 	int[][] boardMatrix; // matrix representing the board (0 = empty, 1 = player1, 2 = player2)
 	StateTree parent; // parent state
-	ArrayList<StateTree> children; // list of children states
+	protected ArrayList<StateTree> children; // list of children states
 	private PrintStream out = null;
 	
 	
@@ -125,5 +125,18 @@ public abstract class StateTree
 	
 	public void setOut(PrintStream printStream) {
 		out = printStream;
+	}
+	
+	//Robert Dutile
+	//helper function, setter for the board matrix.
+	public void setBoardMatrix(int[][] newBoard) {
+		boardMatrix = newBoard;
+	}
+	
+	public boolean getPop1() {
+		return pop1;
+	}
+	public boolean getPop2() {
+		return pop2;
 	}
 }
