@@ -51,34 +51,52 @@ public class SimplePlayer1 extends Player
 		return new Move(false, 100);
 	}
 
-	public ArrayList<Move> getLegalMoves(StateTree st)
-	{
-		ArrayList<Move> legalMoves = new ArrayList<>();
-		// maximum possible legal moves correspond to the number of columns of the board
-		int maxLegalMove = st.columns;
-
-		for (int i = 0; i < st.rows; i++)
-		{
-			for(int j=0; j<st.columns; j++)
-			{
-				if(st.getBoardMatrix()[i][j] == 0)
-				{
-					Move m = new Move(false, j);
-					legalMoves.add(m);
-					maxLegalMove--;
-				}
-				if(maxLegalMove == 0) return legalMoves;
-			}
+	// Myo Min Thant
+	// minimax + alpha beta Pruning
+	public int minimaxAB(StateTree state, int alpha, int beta, int turn) {
+		// TODO terminal test and return utility
+		if (state.getLegalMoves().isEmpty()) {
+			// return the utility function
 		}
-		return legalMoves;
-	}
 
-	public int max_value() {
-		return 0;
-	}
-
-	public int min_value() {
-		return 0;
+		// if turn == 1 do the MAX
+		if (turn == 1) {
+			int v = -1000; // set it -1000 instead of -infinity
+			for (Move m : state.getLegalMoves()) {
+				// make a move from the legal Moves
+				state.makeMove(m);
+				// After making move, we will get a new child state
+				// and recursively check for minimax
+				v = Math.max(v, minimaxAB(state, alpha, beta, 2));
+				// prune the moves
+				if (beta <= v) {
+					return v;
+				}
+				// set the new alpha
+				alpha = Math.max(alpha, v);
+				// I think we do need to set a score for utility function somehow
+				// TODO set the score
+			}
+			return v;
+		}
+		else {
+			int v = +1000; // set it 1000 instead of infinity
+			for (Move m: state.getLegalMoves()) {
+				// make a move from the legal Moves
+				state.makeMove(m);
+				// After making move, we will get a new child state
+				// and recursively check for minimax
+				v = Math.min(v, minimaxAB(state, alpha, beta, 1));
+				// prune the moves
+				if (v <= alpha) {
+					return v;
+				}
+				// set the new beta
+				beta = Math.min(beta, v);
+				// TODO set the score
+			}
+			return v;
+		}
 	}
 
 

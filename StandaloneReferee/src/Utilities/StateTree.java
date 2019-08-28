@@ -139,4 +139,28 @@ public abstract class StateTree
 	public boolean getPop2() {
 		return pop2;
 	}
+
+	//Myo Min Thant
+	//helper function, to return all the legal moves or actions in current State
+	public ArrayList<Move> getLegalMoves()
+	{
+		ArrayList<Move> legalMoves = new ArrayList<>();
+		// maximum possible legal moves correspond to the number of columns of the board
+		int maxLegalMove = this.columns;
+
+		for (int i = 0; i < this.rows; i++)
+		{
+			for(int j=0; j<this.columns; j++)
+			{
+				if(this.getBoardMatrix()[i][j] == 0)
+				{
+					Move m = new Move(false, j);
+					legalMoves.add(m);
+					maxLegalMove--;
+				}
+				if(maxLegalMove == 0) return legalMoves;
+			}
+		}
+		return legalMoves;
+	}
 }
