@@ -22,9 +22,9 @@ import java.lang.Math;
 public abstract class StateTree
 {
 	public int rows, columns, winNumber, turn; // board parameters
-	boolean pop1, pop2; // true if the player has used their pop move
-	int[][] boardMatrix; // matrix representing the board (0 = empty, 1 = player1, 2 = player2)
-	StateTree parent; // parent state
+	public boolean pop1, pop2; // true if the player has used their pop move
+	public int[][] boardMatrix; // matrix representing the board (0 = empty, 1 = player1, 2 = player2)
+	public StateTree parent; // parent state
 	protected ArrayList<StateTree> children; // list of children states
 	private PrintStream out = null;
 	
@@ -33,7 +33,7 @@ public abstract class StateTree
 	{
 		rows = r;
 		columns = c;
-		winNumber = w;
+		winNumber = w; // the number of connected pieces required to win
 		boardMatrix = new int[rows][columns];
 		turn = t;
 		pop1 = p1;

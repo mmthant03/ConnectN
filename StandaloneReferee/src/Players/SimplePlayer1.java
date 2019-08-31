@@ -2,6 +2,8 @@ package Players;
 
 import Utilities.Move;
 import Utilities.StateTree;
+import Referee.Referee;
+import Referee.RefereeBoard;
 
 import java.util.ArrayList;
 
@@ -23,48 +25,24 @@ public class SimplePlayer1 extends Player
 
 	public Move getMove(StateTree state)
 	{
-		for(int j=0; j<state.columns; j++)
-		{
-			for(int i=0; i<state.rows; i++)
-			{
-				
-				if(state.getBoardMatrix()[i][j] == 0)
-				{
-					return new Move(false, j);
-				}
-				
-//				try{Thread.sleep(15000);}
-//				catch(InterruptedException ex){Thread.currentThread().interrupt();}
-				
-//				if(this.turn == 1)
-//					return new Move(false, 0);
-//				if(this.turn == 2)
-//					return new Move(false, 1);	
-			}
-			
-//			if((this.turn == 1 && !state.pop1) || (this.turn == 2 && !state.pop2))
-//			{
-//				return new Move(true, 0);	
-//			}
-			
-		}
-		return new Move(false, 100);
+	    StateTree st = new RefereeBoard(state.rows, state.columns, state.winNumber, state.turn, state.pop1, state.pop2, state.parent);
+		return minimaxAB(st, null, -100000, 100000, true).move;
 	}
 
 	// Myo Min Thant
 	// minimax + alpha beta Pruning
-	public int minimaxAB(StateTree state, int alpha, int beta, int turn)
+	public OptimalMove minimaxAB(StateTree state, Move move, int alpha, int beta, boolean maxPlayer)
     {
-		// TO-FIX minimaxAB needs to be consistent for both turns.
-        // Currently it is only one way.
-		if (state.getLegalMoves().isEmpty())
+
+        // terminal test
+		if (state.getLegalMoves().isEmpty() || Referee.checkFull(state))
 		{
 			// return the utility function
-            return utility(state, turn, false);
+            return new OptimalMove(move, Referee.checkConnect(state));
 		}
 
 		// if turn == 1 do the MAX
-		if (turn == 1)
+		if (maxPlayer)
 		{
 			int v = -100000; // set it -100000 instead of -infinity
 			for (Move m : state.getLegalMoves())
@@ -73,18 +51,21 @@ public class SimplePlayer1 extends Player
 				state.makeMove(m);
 				// After making move, we will get a new state
 				// and recursively check for minimax
-				v = Math.max(v, minimaxAB(state, alpha, beta, 2));
+                OptimalMove optimalMove = minimaxAB(state, m, alpha, beta, false);
+                move = optimalMove.move;
+
+				v = Math.max(v, optimalMove.utility);
+                // set the new alpha
+                alpha = Math.max(alpha, v);
 				// prune the moves
-				if (beta <= v)
+				if (beta <= alpha)
 				{
-					return v;
+					return new OptimalMove(m, v);
 				}
-				// set the new alpha
-				alpha = Math.max(alpha, v);
 				// I think we do need to set a score for utility function somehow
 				// TODO set the score
 			}
-			return v;
+			return new OptimalMove(move, v);
 		}
         else
         {
@@ -95,20 +76,24 @@ public class SimplePlayer1 extends Player
                 state.makeMove(m);
                 // After making move, we will get a new state
                 // and recursively check for minimax
-                v = Math.min(v, minimaxAB(state, alpha, beta, 1));
-                // prune the moves
-                if (v <= alpha)
-                {
-                    return v;
-                }
+                OptimalMove optimalMove = minimaxAB(state, m, alpha, beta, true);
+                move = optimalMove.move;
+
+                v = Math.min(v, optimalMove.utility);
                 // set the new beta
                 beta = Math.min(beta, v);
+                // prune the moves
+                if (beta <= alpha)
+                {
+                    return new OptimalMove(m, v);
+                }
                 // TODO set the score
             }
-            return v;
+            return new OptimalMove(move, v);
         }
 	}
 
+    //we might not need this one at all
 	public int utility(StateTree state, int turn, boolean isOpponent)
     {
         int[][] board = state.getBoardMatrix();
@@ -215,25 +200,6 @@ public class SimplePlayer1 extends Player
             }
         }
 
-
-//        for( int k = 0 ; k <= state.columns + state.rows - 2; k++ ) {
-//            for( int j = 0 ; j <= k ; j++ ) {
-//                int i = k - j;
-//                if( i < state.rows && j < state.columns ) {
-//                    if(board[i][j] == turn && win<state.winNumber)
-//                    {
-//                        win++;
-//                    }
-//                    else if(win == state.winNumber)
-//                    {
-//                        return 100;
-//                    }
-//                    else {
-//                        win = 0;
-//                    }
-//                }
-//            }
-//        }
         return 0;
     }
 
