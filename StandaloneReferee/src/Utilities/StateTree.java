@@ -155,7 +155,7 @@ public abstract class StateTree
 				if(this.getBoardMatrix()[i][j] == 0)
 				{
 					Move m = new Move(false, j);
-					legalMoves.add(m);
+					if(validMove(m)) legalMoves.add(m);
 					maxLegalMove--;
 				}
 				if(maxLegalMove == 0) return legalMoves;
