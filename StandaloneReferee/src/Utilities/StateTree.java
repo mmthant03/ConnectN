@@ -28,13 +28,13 @@ public abstract class StateTree
 	protected ArrayList<StateTree> children; // list of children states
 	private PrintStream out = null;
 	
-	
 	public StateTree(int r, int c, int w, int t, boolean p1, boolean p2, StateTree p)
 	{
 		rows = r;
 		columns = c;
 		winNumber = w; // the number of connected pieces required to win
 		boardMatrix = new int[rows][columns];
+		children = new ArrayList<>();
 		turn = t;
 		pop1 = p1;
 		pop2 = p2;
@@ -111,7 +111,7 @@ public abstract class StateTree
 		for (int i=rows-1; i>=0; i--)
 		{
 		    for (int j = 0; j < columns; j++)
-		    {
+			{
 		        out.print(boardMatrix[i][j] + " ");
 		    }
 		    out.println();
@@ -130,7 +130,11 @@ public abstract class StateTree
 	//Robert Dutile
 	//helper function, setter for the board matrix.
 	public void setBoardMatrix(int[][] newBoard) {
-		boardMatrix = newBoard;
+		for(int i=0; i<this.rows; i++) {
+			for (int j=0; j < columns; j++) {
+				this.boardMatrix[i][j] = newBoard[i][j];
+			}
+		}
 	}
 	
 	public boolean getPop1() {
@@ -140,25 +144,35 @@ public abstract class StateTree
 		return pop2;
 	}
 
-	//Myo Min Thant
+    public abstract StateTree makeChild();
+
+    //Myo Min Thant
 	//helper function, to return all the legal moves or actions in current State
 	public ArrayList<Move> getLegalMoves()
 	{
 		ArrayList<Move> legalMoves = new ArrayList<>();
-		// maximum possible legal moves correspond to the number of columns of the board
-		int maxLegalMove = this.columns;
 
-		for (int i = 0; i < this.rows; i++)
-		{
-			for(int j=0; j<this.columns; j++)
-			{
-				if(this.getBoardMatrix()[i][j] == 0)
-				{
-					Move m = new Move(false, j);
-					if(validMove(m)) legalMoves.add(m);
-					maxLegalMove--;
-				}
-				if(maxLegalMove == 0) return legalMoves;
+//		for (int j = 0; j < this.columns; j++)
+//		{
+//			for(int i=0; i<this.rows; i++)
+//			{
+//				if(this.getBoardMatrix()[i][j] == 0)
+//				{
+//					Move m = new Move(false, j);
+//					if(validMove(m)) {
+//					    legalMoves.add(m);
+//                        break;
+//                    }
+//
+//				}
+//
+//			}
+//		}
+
+		for (int j = 0; j < this.columns; j++) {
+			if(this.getBoardMatrix()[this.rows-1][j] == 0) {
+				Move m = new Move(false, j);
+				legalMoves.add(m);
 			}
 		}
 		return legalMoves;

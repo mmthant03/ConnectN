@@ -2,6 +2,8 @@ package Referee;
 
 import Utilities.StateTree;
 
+import java.util.ArrayList;
+
 /**
  * This is a simple state that just keeps track of the board and whose
  * turn it is. The referee uses this board to keep track of things
@@ -21,8 +23,9 @@ public class RefereeBoard extends StateTree
 	//Robert Dutile:
 	//Helper function that creates and returns a child board, that is at creation identical to the parent(i.e. this)
 	//save for it's parent and children
+    @Override
 	public StateTree makeChild() {
-		RefereeBoard newChild = new RefereeBoard(rows, columns, winNumber, turn, getPop1(), getPop2(), this);
+		StateTree newChild = new RefereeBoard(rows, columns, winNumber, turn, getPop1(), getPop2(), this);
 		newChild.setBoardMatrix(getBoardMatrix());
 		children.add(newChild);
 		

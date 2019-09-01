@@ -26,19 +26,23 @@ public class SimplePlayer1 extends Player
 	public Move getMove(StateTree state)
 	{
 	    StateTree st = new RefereeBoard(state.rows, state.columns, state.winNumber, state.turn, state.pop1, state.pop2, state.parent);
-		return minimaxAB(st, null, -100000, 100000, true).move;
+	    st.setBoardMatrix(state.getBoardMatrix());
+	    OptimalMove m = minimaxAB(st, null, 14, -100000, 100000, true);
+	    return m.move;
 	}
 
 	// Myo Min Thant
 	// minimax + alpha beta Pruning
-	public OptimalMove minimaxAB(StateTree state, Move move, int alpha, int beta, boolean maxPlayer)
+	public OptimalMove minimaxAB(StateTree state, Move move, int depth, int alpha, int beta, boolean maxPlayer)
     {
 
+
         // terminal test
-		if (state.getLegalMoves().isEmpty() || Referee.checkFull(state))
+		if (state.getLegalMoves().isEmpty() || depth == 0 || Referee.checkFull(state) || Referee.checkForWinner(state)!=0)
 		{
-			// return the utility function
-            return new OptimalMove(move, Referee.checkConnect(state));
+            // return the utility function
+            int e = evaluation(state);
+            return new OptimalMove(move, e);
 		}
 
 		// if turn == 1 do the MAX
@@ -48,11 +52,13 @@ public class SimplePlayer1 extends Player
 			for (Move m : state.getLegalMoves())
 			{
 				// make a move from the legal Moves
-				state.makeMove(m);
+				StateTree child = state.makeChild();
+                child.makeMove(m);
 				// After making move, we will get a new state
 				// and recursively check for minimax
-                OptimalMove optimalMove = minimaxAB(state, m, alpha, beta, false);
-                move = optimalMove.move;
+
+                OptimalMove optimalMove = minimaxAB(child, m, depth-1, alpha, beta, false);
+                move = (v >= optimalMove.utility) ? move : optimalMove.move;
 
 				v = Math.max(v, optimalMove.utility);
                 // set the new alpha
@@ -60,7 +66,8 @@ public class SimplePlayer1 extends Player
 				// prune the moves
 				if (beta <= alpha)
 				{
-					return new OptimalMove(m, v);
+				    break;
+					//return new OptimalMove(move, v);
 				}
 				// I think we do need to set a score for utility function somehow
 				// TODO set the score
@@ -73,11 +80,12 @@ public class SimplePlayer1 extends Player
             for (Move m: state.getLegalMoves())
             {
                 // make a move from the legal Moves
-                state.makeMove(m);
+                StateTree child = state.makeChild();
+                child.makeMove(m);
                 // After making move, we will get a new state
                 // and recursively check for minimax
-                OptimalMove optimalMove = minimaxAB(state, m, alpha, beta, true);
-                move = optimalMove.move;
+                OptimalMove optimalMove = minimaxAB(child, m, depth-1, alpha, beta, true);
+                move = (v <= optimalMove.utility) ? move : optimalMove.move;
 
                 v = Math.min(v, optimalMove.utility);
                 // set the new beta
@@ -85,7 +93,8 @@ public class SimplePlayer1 extends Player
                 // prune the moves
                 if (beta <= alpha)
                 {
-                    return new OptimalMove(m, v);
+                    break;
+                    //return new OptimalMove(move, v);
                 }
                 // TODO set the score
             }
@@ -94,113 +103,160 @@ public class SimplePlayer1 extends Player
 	}
 
     //we might not need this one at all
-	public int utility(StateTree state, int turn, boolean isOpponent)
+	public int evaluation(StateTree state)
     {
+        int turn = this.turn;
         int[][] board = state.getBoardMatrix();
-
-        int win = 0;
-        int utilityVal = (!isOpponent) ? 1 : -1; // will return negative value for opponent moves
+        int horizontalWin = 0;
+        int verticalWin = 0;
+        int diagonalOneWin = 0;
+        int diagonalTwoWin = 0;
+        int[] turnCount = new int[3];
+        int oppTurn = 3-turn;
         // check horizontals
+        // this checks for how many 1s and 2s are in each rows
+        // for each row, the more pieces of a player there is, he is more likely to win
+        // but if he
         for(int i=0; i<state.rows; i++)
         {
             for(int j=0; j<state.columns; j++)
             {
-                if(board[i][j] == turn && win<state.winNumber)
-                {
-                    win++;
+                if(board[i][j] == turn) {
+                    if (j > 0 && board[i][j - 1] == 0 && turnCount[0] > 0) {
+                        turnCount[turn] = turnCount[turn] + turnCount[0];
+                        turnCount[turn]++;
+                        turnCount[0] = 0;
+
+                    }
+                    else {
+                        turnCount[turn]++;
+                    }
                 }
-                else if(win == state.winNumber)
-                {
-                    return utilityVal*100;
+                else if(board[i][j] == oppTurn) {
+                    if (j > 0 && board[i][j - 1] == 0 && turnCount[0] > 0) {
+                        turnCount[turn] = turnCount[turn] + turnCount[0];
+                        turnCount[oppTurn]++;
+                        turnCount[0] = 0;
+                    }
+                    else {
+                        turnCount[oppTurn]++;
+                    }
                 }
-                else {
-                    win = 0;
+                else if(board[i][j] == 0){
+                    if(j > 0 && board[i][j-1] == turn) {
+                        turnCount[turn]++;
+                    }
+                    else if(j > 0 && board[i][j-1] == oppTurn) {
+                        turnCount[oppTurn]++;
+                    }
+                    else{
+                        turnCount[0]++;
+                    }
                 }
             }
         }
+        turnCount[turn] = (state.winNumber>turnCount[turn]) ? 0 : turnCount[turn];
+        turnCount[oppTurn] = (state.winNumber>turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+        horizontalWin = turnCount[turn]-turnCount[oppTurn];
+        turnCount[turn] = 0;
+        turnCount[oppTurn] = 0;
 
         //check verticals
         for(int j=0;j<state.columns;j++)
         {
-            for(int i=0;i<state.rows;i++)
-            {
-                if(board[i][j] == turn && win<state.winNumber)
-                {
-                    win++;
+            for(int i=0;i<state.rows;i++) {
+                if (board[i][j] == turn) {
+                    if (i < state.rows - 1 && board[i + 1][j] != oppTurn) {
+                        turnCount[turn]++;
+                    } else if (i < state.rows - 1 && board[i + 1][j] == oppTurn) {
+                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                    } else {
+                        turnCount[turn]++;
+                    }
                 }
-                else if(win == state.winNumber)
-                {
-                    return utilityVal*100;
+                else if (board[i][j] == oppTurn) {
+                    if (i < state.rows - 1 && board[i + 1][j] != turn) {
+                        turnCount[oppTurn]++;
+                    } else if (i < state.rows - 1 && board[i + 1][j] == turn) {
+                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                    } else {
+                        turnCount[oppTurn]++;
+                    }
                 }
-                else {
-                    win = 0;
+                else if (board[i][j] == 0) {
+                    if(i > 0 && board[i-1][j] == turn) {
+                        turnCount[turn]++;
+                    }
+                    else if(i > 0 && board[i-1][j] == oppTurn){
+                        turnCount[oppTurn]++;
+                    }
                 }
             }
         }
+        verticalWin = turnCount[turn]-turnCount[oppTurn];
+        turnCount[turn] = 0;
+        turnCount[oppTurn] = 0;
 
         //check diagonals in both ways
-        int count;
         // top-left to bottom-right (lower half)
         for(int rowStart = 0; rowStart < state.rows - state.winNumber; rowStart++){
-            count = 0;
             int row, col;
             for( row = rowStart, col = 0; row < state.rows && col < state.columns; row++, col++ ){
                 if(board[row][col] == turn){
-                    count++;
-                    if(count >= state.winNumber) return utilityVal*100;
+                    turnCount[turn]++;
                 }
-                else {
-                    count = 0;
+                else if(board[row][col] == oppTurn){
+                    turnCount[oppTurn]++;
                 }
             }
         }
 
         // top-left to bottom-right (upper half)
         for(int colStart = 1; colStart < state.columns - state.winNumber; colStart++){
-            count = 0;
             int row, col;
             for( row = 0, col = colStart; row < state.rows && col < state.columns; row++, col++ ){
-                if(board[row][col] == turn){
-                    count++;
-                    if(count >= state.winNumber) return utilityVal*100;
+                if(board[row][col] == turn) {
+                    turnCount[turn]++;
                 }
-                else {
-                    count = 0;
+                else if(board[row][col] == oppTurn){
+                        turnCount[oppTurn]++;
                 }
             }
         }
+        diagonalOneWin = turnCount[turn]-turnCount[oppTurn];
+        turnCount[turn] = 0;
+        turnCount[oppTurn] = 0;
 
         // bottom-left to top-right (upper half)
         for(int rowStart = state.rows-1; rowStart >= 0 + state.winNumber-1; rowStart--){
-            count = 0;
             int row, col;
             for( row = rowStart, col = 0; row >= 0 && col < state.columns; row--, col++ ){
-                if(board[row][col] == turn){
-                    count++;
-                    if(count >= state.winNumber) return utilityVal*100;
+                if(board[row][col] == turn) {
+                    turnCount[turn]++;
                 }
-                else {
-                    count = 0;
+                else if(board[row][col] == oppTurn){
+                    turnCount[oppTurn]++;
                 }
             }
         }
 
         // bottom-left to top-right (lower half)
         for(int colStart = 1; colStart < state.columns - state.winNumber; colStart++){
-            count = 0;
             int row, col;
             for( row = state.rows-1, col = colStart; row > 0 && col < state.columns; row--, col++ ){
-                if(board[row][col] == turn){
-                    count++;
-                    if(count >= state.winNumber) return utilityVal*100;
+                if(board[row][col] == turn) {
+                    turnCount[turn]++;
                 }
-                else {
-                    count = 0;
+                else if(board[row][col] == oppTurn){
+                    turnCount[oppTurn]++;
                 }
             }
         }
+        diagonalTwoWin = turnCount[turn]-turnCount[oppTurn];
+        turnCount[turn] = 0;
+        turnCount[oppTurn] = 0;
 
-        return 0;
+        return (horizontalWin+verticalWin+diagonalOneWin+diagonalTwoWin);
     }
 
 
