@@ -126,50 +126,5 @@ public abstract class StateTree
 	public void setOut(PrintStream printStream) {
 		out = printStream;
 	}
-	
-//	//Robert Dutile
-//	//helper function, setter for the board matrix.
-//	public void setBoardMatrix(int[][] newBoard) {
-//		for(int i=0; i<this.rows; i++) {
-//			for (int j=0; j < columns; j++) {
-//				this.boardMatrix[i][j] = newBoard[i][j];
-//			}
-//		}
-//	}
-	
-	public boolean getPop1() {
-		return pop1;
-	}
-	public boolean getPop2() {
-		return pop2;
-	}
 
-    //public abstract StateTree makeChild();
-
-//    //Myo Min Thant
-//	//helper function, to return all the legal moves or actions in current State
-//	public ArrayList<Move> getLegalMoves()
-//	{
-//		ArrayList<Move> legalMoves = new ArrayList<Move>();
-//		for (int j = 0; j < this.columns; j++) {
-//			if(this.getBoardMatrix()[this.rows-1][j] == 0) {
-//				Move m = new Move(false, j);
-//				legalMoves.add(m);
-//			}
-//			if(this.turn == 1){
-//				if(!getPop1() && this.getBoardMatrix()[0][j] == 1) {
-//					Move m = new Move (true, j);
-//					legalMoves.add(m);
-//				}
-//			}
-//			else {
-//				if(!getPop2() && this.getBoardMatrix()[0][j] == 2) {
-//					Move m = new Move (true, j);
-//					legalMoves.add(m);
-//				}
-//			}
-//		}
-//
-//		return legalMoves;
-//	}
 }

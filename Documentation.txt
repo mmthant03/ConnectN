@@ -1,0 +1,42 @@
+CS4341 Project 1 Documentation
+
+Robert Dutile, Myo Min Thant
+
+Modifications:
+We created 3 classes for our project, which contain all of our work, and are all required for the proper functioning of
+our program. They are RMOptimalMove, RMPlayer, and RMStateTree. The first two are found in the Players package,
+while the third is in the Utilities package.
+
+How to run:
+In order to run them, simply place the three functions in the appropriate packages, and then add the player to
+the tournament or referee as normal.
+
+Implementation Details:
+RMOptimalMove is a class that we use for passing information up the chain in our recursive search function.
+It holds a Move and an integer value representing the evaluation.
+
+RMStateTree is an extension of StateTree, containing several helper functions for the main player.
+getPop1() and getPop2() are getters for Pop1 and Pop2. setBoardMatrix is a function that lets us set the board matrix,
+which we found useful for creating copies of existing boards. makeChild() is a helper function,
+that creates a new RMStateTree which is an identical child of the creating state.
+getLegalMoves() gives an ArrayList containing all legal moves possible on the current board.
+
+RMPlayer is, as the name implies, our player class. getMove() is of course the main function called by the Referee.
+It mostly serves as a caller and handler for our main search function, and returns the desired move.
+minimaxAB() is our main search function, which performs a limited depth-first-search (based on minimax with
+alpha-beta pruning) on the decision tree for the game, which it also generates as it goes along.
+It returns an OptimalMove, containing the result of the recursive search. Finally, evaluation()
+is our heuristic function, which returns an estimated value of a given board state.
+
+Here is how our heuristic function works. We distinguish the two conditions where the given state is evaluated.
+First is the winning condition which leads any of the player to be winning with exactly given N connected pieces.
+If any of the player has met the winning condition, one player should make a move that leads him to win in his next turn
+or block another player who is going to win in his next turn. This factor should outweigh any condition in the game so it
+is given a considerably large value. Second condition is where the winning condition is not met but one of the player is
+more likely to win by being able to manipulate the neighbouring white spaces. Thus, we check the white spaces along with
+the number of pieces in all directions and add them all up. As a result, considering both condition, the function will
+return positive for self, negative for opponent and 0 for a tie.
+
+To evaluate our heuristic function more effectively, we used IDDFS in every turn and gradually increasing the depth limit
+after each turn. We couldn't figure out the connection between the optimal starting depth and number of N required to win.
+Thus, we started with N as a starting depth and gradually increase the depth by 1 in each turn.
