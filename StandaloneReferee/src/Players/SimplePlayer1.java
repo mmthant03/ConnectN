@@ -18,6 +18,8 @@ import java.util.ArrayList;
  */
 public class SimplePlayer1 extends Player
 {
+    public int optimalDepth = 0;
+
 	public SimplePlayer1(String n, int t, int l)
 	{
 		super(n, t, l);
@@ -25,18 +27,26 @@ public class SimplePlayer1 extends Player
 
 	public Move getMove(StateTree state)
 	{
+	    if(optimalDepth == 0) optimalDepth = state.winNumber;
 	    StateTree st = new RefereeBoard(state.rows, state.columns, state.winNumber, state.turn, state.pop1, state.pop2, state.parent);
 	    st.setBoardMatrix(state.getBoardMatrix());
-	    OptimalMove m = minimaxAB(st, null, 9, -100000, 100000, true);
+	    long startTime = System.currentTimeMillis();
+	    System.out.println(this.optimalDepth);
+	    OptimalMove m = minimaxAB(st, null, this.optimalDepth, -100000, 100000, true, startTime);
+        optimalDepth = optimalDepth+1;
 	    return m.move;
 	}
 
 	// Myo Min Thant
 	// minimax + alpha beta Pruning
-	public OptimalMove minimaxAB(StateTree state, Move move, int depth, int alpha, int beta, boolean maxPlayer)
+	public OptimalMove minimaxAB(StateTree state, Move move, int depth, int alpha, int beta, boolean maxPlayer, long startTime)
     {
         // terminal test
-		if (state.getLegalMoves().isEmpty() || depth == 0 || Referee.checkFull(state) || Referee.checkForWinner(state)!=0)
+        long stopTime = System.currentTimeMillis();
+        long total = stopTime - startTime;
+        long newTimeLimit = ((this.timeLimit * 1000) * 5) / 6;
+        boolean timeUp = total>=newTimeLimit;
+		if (state.getLegalMoves().isEmpty() || depth == 0 || Referee.checkFull(state) || Referee.checkForWinner(state)!=0 || timeUp)
 		{
             // return the utility function
             int e = evaluation(state);
@@ -54,7 +64,7 @@ public class SimplePlayer1 extends Player
                     // After making move, we will get a new state
                     // and recursively check for minimax
 
-                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, false);
+                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, false, startTime);
                     //move = (v >= optimalMove.utility) ? move : optimalMove.move;
                     move = (v >= optimalMove.utility) ? move : m;
                     v = Math.max(v, optimalMove.utility);
@@ -75,7 +85,7 @@ public class SimplePlayer1 extends Player
                     child.makeMove(m);
                     // After making move, we will get a new state
                     // and recursively check for minimax
-                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, true);
+                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, true, startTime);
                     //move = (v <= optimalMove.utility) ? move : optimalMove.move;
                     move = (v <= optimalMove.utility) ? move : m;
                     v = Math.min(v, optimalMove.utility);
@@ -153,14 +163,18 @@ public class SimplePlayer1 extends Player
         // for each column, check who is at the top
         // for each column, if one piece is blocked by another, check how many he has in a row.
         // for each column, if the top one has more white spaces up to N, he is likely to win.
+        int verOneCount = 0;
+        int verTwoCount = 0;
         for(int j=0;j<state.columns;j++)
         {
             for(int i=0;i<state.rows;i++) {
                 if (board[i][j] == turn) {
                     if (i < state.rows - 1 && board[i + 1][j] != oppTurn) {
                         turnCount[turn]++;
+                        verOneCount++;
                     } else if (i < state.rows - 1 && board[i + 1][j] == oppTurn) {
-                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                        turnCount[turn] = (state.winNumber > verOneCount) ? turnCount[turn]-- : turnCount[turn];
+                        verOneCount = 0;
                     } else {
                         turnCount[turn]++;
                     }
@@ -168,23 +182,24 @@ public class SimplePlayer1 extends Player
                 else if (board[i][j] == oppTurn) {
                     if (i < state.rows - 1 && board[i + 1][j] != turn) {
                         turnCount[oppTurn]++;
+                        verTwoCount++;
                     } else if (i < state.rows - 1 && board[i + 1][j] == turn) {
-                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                        turnCount[oppTurn] = (state.winNumber > verTwoCount) ? turnCount[oppTurn]-- : turnCount[oppTurn];
                     } else {
                         turnCount[oppTurn]++;
                     }
                 }
                 else if (board[i][j] == 0) {
                     if(i > 0 && board[i-1][j] == turn) {
-                        turnCount[turn]++;
+                        turnCount[turn]+= state.rows-i;
                     }
                     else if(i > 0 && board[i-1][j] == oppTurn){
-                        turnCount[oppTurn]++;
+                        turnCount[oppTurn]+= state.rows-i;
                     }
                 }
             }
         }
-        verticalWin = turnCount[turn]-turnCount[oppTurn];
+        verticalWin = (turnCount[turn]-turnCount[oppTurn]);
         turnCount[turn] = 0;
         turnCount[oppTurn] = 0;
 
@@ -200,7 +215,8 @@ public class SimplePlayer1 extends Player
                     if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] != oppTurn) {
                         turnCount[turn]++;
                     } else if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] == oppTurn) {
-                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                       // turnCount[turn] = (state.winNumber > turnCount[turn]) ? turnCount[turn]-- : turnCount[turn];
+                        turnCount[turn]--;
                     } else {
                         turnCount[turn]++;
                     }
@@ -209,7 +225,8 @@ public class SimplePlayer1 extends Player
                     if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] != turn) {
                         turnCount[oppTurn]++;
                     } else if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] == turn) {
-                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                        //turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? turnCount[turn]-- : turnCount[oppTurn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[oppTurn]++;
                     }
@@ -233,7 +250,8 @@ public class SimplePlayer1 extends Player
                     if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] != oppTurn) {
                         turnCount[turn]++;
                     } else if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] == oppTurn) {
-                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                        //turnCount[turn] = (state.winNumber > turnCount[turn]) ? turnCount[turn]-- : turnCount[turn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[turn]++;
                     }
@@ -242,7 +260,8 @@ public class SimplePlayer1 extends Player
                     if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] != turn) {
                         turnCount[oppTurn]++;
                     } else if (row < state.rows - 1 && col < state.columns - 1 && board[row + 1][col + 1] == turn) {
-                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                        //turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? turnCount[oppTurn]-- : turnCount[oppTurn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[oppTurn]++;
                     }
@@ -270,7 +289,8 @@ public class SimplePlayer1 extends Player
             for( row = rowStart, col = 0; row >= 0 && col < state.columns; row--, col++ ){
                 if(board[row][col] == turn) {
                     if (prevTurn != oppTurn) {
-                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                        //turnCount[turn] = (state.winNumber > turnCount[turn]) ? turnCount[turn]-- : turnCount[turn];
+                        turnCount[turn]--;
                     } else {
                         turnCount[turn]++;
                         prevTurn = turn;
@@ -278,7 +298,8 @@ public class SimplePlayer1 extends Player
                 }
                 else if(board[row][col] == oppTurn) {
                     if (prevTurn != turn) {
-                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                        //turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? turnCount[oppTurn]-- : turnCount[oppTurn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[oppTurn]++;
                         prevTurn = oppTurn;
@@ -310,7 +331,8 @@ public class SimplePlayer1 extends Player
             for( row = state.rows-1, col = colStart; row > 0 && col < state.columns; row--, col++ ){
                 if(board[row][col] == turn) {
                     if (prevTurn != oppTurn) {
-                        turnCount[turn] = (state.winNumber > turnCount[turn]) ? 0 : turnCount[turn];
+                        //turnCount[turn] = (state.winNumber > turnCount[turn]) ? turnCount[turn]-- : turnCount[turn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[turn]++;
                         prevTurn = turn;
@@ -318,7 +340,8 @@ public class SimplePlayer1 extends Player
                 }
                 else if(board[row][col] == oppTurn) {
                     if (prevTurn != turn) {
-                        turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? 0 : turnCount[oppTurn];
+                        //turnCount[oppTurn] = (state.winNumber > turnCount[oppTurn]) ? turnCount[oppTurn]-- : turnCount[oppTurn];
+                        turnCount[oppTurn]--;
                     } else {
                         turnCount[oppTurn]++;
                         prevTurn = oppTurn;
@@ -347,12 +370,14 @@ public class SimplePlayer1 extends Player
         turnCount[turn] = 0;
         turnCount[oppTurn] = 0;
         int winChances = 0;
+        int winnerExist = (Referee.checkForWinner(state)!=0) ? 0 : Referee.checkForWinner(state);
         if(turn == 1) {
-            winChances = 4 * Referee.checkForWinner(state);
+            winChances = 100 * winnerExist;
         } else {
-            winChances = -1 * 4 * Referee.checkForWinner(state);
+            winChances = -1 * 100 * winnerExist;
         }
-        return winChances+horizontalWin+verticalWin+diagonalOneWin+diagonalTwoWin;
+        //if(winnerExist!=0) return winnerExist;
+        return winnerExist+horizontalWin+verticalWin+diagonalOneWin+diagonalTwoWin;
     }
 
 

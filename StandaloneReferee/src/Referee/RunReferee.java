@@ -19,16 +19,16 @@ public class RunReferee {
 		// Match parameter
 		// You can modify them
 		int timeLimit = 15;
-		int boardRows = 5;
-		int boardColumns = 5;
-		int winNumber = 4;
+		int boardRows = 6;
+		int boardColumns = 7;
+		int winNumber = 5;
 		int battleDurationLimit = 13600;
 		// End of modifications
 		
 		
 		
-		Player player1 = (Player) new SimplePlayer("SimplePlayer", 1, timeLimit);
-		Player player2 = (Player) new SimplePlayer1("SimplePlayer1", 2, timeLimit);
+		Player player1 = (Player) new SimplePlayer1("SimplePlayer1", 1, timeLimit);
+		Player player2 = (Player) new SimplePlayer("SimplePlayer", 2, timeLimit);
 
 		Referee referee = new Referee();
 		referee.setOut(System.out);
