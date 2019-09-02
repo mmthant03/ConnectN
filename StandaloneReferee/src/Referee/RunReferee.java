@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import Players.Player;
-import Players.SimplePlayer1;
+import Players.RMPlayer;
 import Players.SimplePlayer;
 
 public class RunReferee {
@@ -21,14 +21,14 @@ public class RunReferee {
 		int timeLimit = 15;
 		int boardRows = 6;
 		int boardColumns = 7;
-		int winNumber = 5;
+		int winNumber = 4;
 		int battleDurationLimit = 13600;
 		// End of modifications
 		
 		
 		
-		Player player1 = (Player) new SimplePlayer1("SimplePlayer1", 1, timeLimit);
-		Player player2 = (Player) new SimplePlayer("SimplePlayer", 2, timeLimit);
+		Player player1 = (Player) new RMPlayer("RMPlayer1", 1, timeLimit);
+		Player player2 = (Player) new RMPlayer("RMPlayer2", 2, timeLimit);
 
 		Referee referee = new Referee();
 		referee.setOut(System.out);

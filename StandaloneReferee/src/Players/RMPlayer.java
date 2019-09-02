@@ -1,11 +1,9 @@
 package Players;
 
 import Utilities.Move;
+import Utilities.RMStateTree;
 import Utilities.StateTree;
 import Referee.Referee;
-import Referee.RefereeBoard;
-
-import java.util.ArrayList;
 
 
 /**
@@ -16,11 +14,11 @@ import java.util.ArrayList;
  * @author Ethan Prihar
  *
  */
-public class SimplePlayer1 extends Player
+public class RMPlayer extends Player
 {
     public int optimalDepth = 0;
 
-	public SimplePlayer1(String n, int t, int l)
+	public RMPlayer(String n, int t, int l)
 	{
 		super(n, t, l);
 	}
@@ -28,18 +26,30 @@ public class SimplePlayer1 extends Player
 	public Move getMove(StateTree state)
 	{
 	    if(optimalDepth == 0) optimalDepth = state.winNumber;
-	    StateTree st = new RefereeBoard(state.rows, state.columns, state.winNumber, state.turn, state.pop1, state.pop2, state.parent);
+	    RMStateTree st = new RMStateTree(state.rows, state.columns, state.winNumber, state.turn, state.pop1, state.pop2, state.parent);
 	    st.setBoardMatrix(state.getBoardMatrix());
 	    long startTime = System.currentTimeMillis();
 	    System.out.println(this.optimalDepth);
-	    OptimalMove m = minimaxAB(st, null, this.optimalDepth, -100000, 100000, true, startTime);
+	    RMOptimalMove m = minimaxAB(st, null, this.optimalDepth, -100000, 100000, true, startTime);
         optimalDepth = optimalDepth+1;
 	    return m.move;
 	}
 
-	// Myo Min Thant
-	// minimax + alpha beta Pruning
-	public OptimalMove minimaxAB(StateTree state, Move move, int depth, int alpha, int beta, boolean maxPlayer, long startTime)
+    /**
+     * This function is an implementation of minimax + alpha-beta pruning
+     *
+     * @author Myo Min Thant, Robert Dutile
+     *
+     * @param state the current state it is going to evaluate
+     * @param move the current action the player is going to do
+     * @param depth the depth limit of the state tree
+     * @param alpha the best value for max player
+     * @param beta the best value for min player
+     * @param maxPlayer to determine whose turn it is in the state tree
+     * @param startTime to calculate and limit the function at certain time
+     * @return RMOptimalMove, returns the best move for the current state and its utility value
+     */
+	public RMOptimalMove minimaxAB(RMStateTree state, Move move, int depth, int alpha, int beta, boolean maxPlayer, long startTime)
     {
         // terminal test
         long stopTime = System.currentTimeMillis();
@@ -50,43 +60,42 @@ public class SimplePlayer1 extends Player
 		{
             // return the utility function
             int e = evaluation(state);
-            return new OptimalMove(move, e);
+            return new RMOptimalMove(move, e);
 		}
         else {
             // if turn == this.turn do the MAX
             if (maxPlayer) {
                 int v = -100000; // set it -100000 instead of -infinity
                 for (Move m : state.getLegalMoves()) {
-                    // make a move from the legal Moves
+                    // check whether the player is not popping up other piece. If so, skip this iteration
                     if(m.getPop() && state.getBoardMatrix()[0][m.getColumn()] != this.turn) continue;
-                    StateTree child = state.makeChild();
+                    // create a child and make a move from the legal Moves
+                    RMStateTree child = state.makeChild();
                     child.makeMove(m);
-                    // After making move, we will get a new state
-                    // and recursively check for minimax
-
-                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, false, startTime);
-                    //move = (v >= optimalMove.utility) ? move : optimalMove.move;
+                    // After making move, recursively check for minimax and alpha-beta pruning
+                    RMOptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, false, startTime);
+                    // compare the better move
                     move = (v >= optimalMove.utility) ? move : m;
                     v = Math.max(v, optimalMove.utility);
                     // set the new alpha
                     alpha = Math.max(alpha, v);
-                    // prune the moves
+                    // prune all the other moves that are left in the arraylist
                     if (beta <= alpha) {
                         break;
                     }
                 }
-                return new OptimalMove(move, v);
+                return new RMOptimalMove(move, v);
             } else {
                 int v = +100000; // set it 100000 instead of infinity
                 for (Move m : state.getLegalMoves()) {
-                    // make a move from the legal Moves
+                    // check whether the player is not popping up other piece. If so, skip this iteration
                     if(m.getPop() && state.getBoardMatrix()[0][m.getColumn()] == this.turn) continue;
-                    StateTree child = state.makeChild();
+                    // create a child and make a move from the legal Moves
+                    RMStateTree child = state.makeChild();
                     child.makeMove(m);
-                    // After making move, we will get a new state
-                    // and recursively check for minimax
-                    OptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, true, startTime);
-                    //move = (v <= optimalMove.utility) ? move : optimalMove.move;
+                    // After making move, recursively check for minimax and alpha-beta pruning
+                    RMOptimalMove optimalMove = minimaxAB(child, m, depth - 1, alpha, beta, true, startTime);
+                    // Compare the better move
                     move = (v <= optimalMove.utility) ? move : m;
                     v = Math.min(v, optimalMove.utility);
                     // set the new beta
@@ -96,11 +105,23 @@ public class SimplePlayer1 extends Player
                         break;
                     }
                 }
-                return new OptimalMove(move, v);
+                return new RMOptimalMove(move, v);
             }
         }
 	}
 
+    /**
+     *  This function is a heuristic evaluation function to determine the value of each player
+     *  It checks the winning conditions, and winning chances of each player in horizontal, vertical,
+     *  and two diagonal ways.
+     *  Winning conditions are weighted more because if another player is winning in next turn, it should
+     *  block it instead of building a winning path for itself.
+     *  The winning chances are calculated by determining white spaces that each player could build up to
+     *  its winning conditions.
+     * @author Myo Min Thant, Robert Dutile
+     * @param state StateTree of the given state
+     * @return int, positive for self, negative for opponent and 0 for tie
+     */
 	public int evaluation(StateTree state)
     {
         int turn = this.turn;
@@ -115,7 +136,7 @@ public class SimplePlayer1 extends Player
         // this checks for how many 1s and 2s are in each rows
         // for each row, the more pieces of a player there is, he is more likely to win
         // for each row, the more white spaces a player can use, he is more likely to win
-        // However, if he is blocked by another player before N, his chance goes back to 0.
+        // However, if he is blocked by another player before N, his chance got reduced.
         for(int i=0; i<state.rows; i++)
         {
             for(int j=0; j<state.columns; j++)
@@ -162,6 +183,7 @@ public class SimplePlayer1 extends Player
         // check verticals
         // for each column, check who is at the top
         // for each column, if one piece is blocked by another, check how many he has in a row.
+        // if blocked, reduce the chance of winning by that player
         // for each column, if the top one has more white spaces up to N, he is likely to win.
         int verOneCount = 0;
         int verTwoCount = 0;
@@ -204,7 +226,7 @@ public class SimplePlayer1 extends Player
         turnCount[oppTurn] = 0;
 
         // check diagonals in both ways
-        // for each diagonal check if white space can give a winning chance to both player
+        // for each diagonal check if white space can give a winning chance to either of the player
         // bottom-left to top-right (upper half)
         int rowBound = state.rows - state.winNumber;
         int colBound = state.columns - state.winNumber;
@@ -377,7 +399,7 @@ public class SimplePlayer1 extends Player
             winChances = -1 * 100 * winnerExist;
         }
         //if(winnerExist!=0) return winnerExist;
-        return winnerExist+horizontalWin+verticalWin+diagonalOneWin+diagonalTwoWin;
+        return winChances+horizontalWin+verticalWin+diagonalOneWin+diagonalTwoWin;
     }
 
 
