@@ -150,31 +150,26 @@ public abstract class StateTree
 	//helper function, to return all the legal moves or actions in current State
 	public ArrayList<Move> getLegalMoves()
 	{
-		ArrayList<Move> legalMoves = new ArrayList<>();
-
-//		for (int j = 0; j < this.columns; j++)
-//		{
-//			for(int i=0; i<this.rows; i++)
-//			{
-//				if(this.getBoardMatrix()[i][j] == 0)
-//				{
-//					Move m = new Move(false, j);
-//					if(validMove(m)) {
-//					    legalMoves.add(m);
-//                        break;
-//                    }
-//
-//				}
-//
-//			}
-//		}
-
+		ArrayList<Move> legalMoves = new ArrayList<Move>();
 		for (int j = 0; j < this.columns; j++) {
 			if(this.getBoardMatrix()[this.rows-1][j] == 0) {
 				Move m = new Move(false, j);
 				legalMoves.add(m);
 			}
+			if(this.turn == 1){
+				if(!getPop1() && this.getBoardMatrix()[0][j] == 1) {
+					Move m = new Move (true, j);
+					legalMoves.add(m);
+				}
+			}
+			else {
+				if(!getPop2() && this.getBoardMatrix()[0][j] == 2) {
+					Move m = new Move (true, j);
+					legalMoves.add(m);
+				}
+			}
 		}
+
 		return legalMoves;
 	}
 }
